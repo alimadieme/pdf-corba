@@ -1,0 +1,31 @@
+module PdfServiceApp {
+
+    // Définition d’un type séquence pour les pages
+    typedef sequence<long> PagesSeq;
+
+    interface PdfService {
+        // Fusion de PDF
+        void fusion(in string fichier1, in string fichier2, out string resultat);
+
+        // Découpage de PDF
+        void decoupage(in string fichier, in long pageDebut, in long pageFin, out string resultat);
+
+        // Extraction de pages
+        void extrairePages(in string fichier, in long pageDebut, in long pageFin, out string resultat);
+
+        // Suppression de pages (utilise le type PagesSeq)
+        void supprimerPages(in string fichier, in PagesSeq pages, out string resultat);
+
+        // Ajout de mot de passe
+        void ajouterMotDePasse(in string fichier, in string motDePasse, out string resultat);
+
+        // Conversion PDF → Image
+        void convertirEnImage(in string fichier, out string resultat);
+
+        // Extraction de texte
+        void extraireTexte(in string fichier, out string texte);
+
+        // Création de PDF
+        void creerPdf(in string contenuTexte, out string resultat);
+    };
+};

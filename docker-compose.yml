@@ -1,0 +1,34 @@
+services:
+  corba-server:
+    build: ./corba-server
+    container_name: corba_server
+    networks:
+      - pdf_network
+
+  api-rest:
+    build: ./api-rest
+    container_name: pdf_api
+    ports:
+      - "8080:8080"
+    environment:
+      - CORBA_HOST=corba-server
+    depends_on:
+      - corba-server
+    networks:
+      - pdf_network
+
+  frontend:
+    image: nginx:alpine
+    container_name: pdf_frontend
+    ports:
+      - "8081:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    depends_on:
+      - api-rest
+    networks:
+      - pdf_network
+
+networks:
+  pdf_network:
+    driver: bridge

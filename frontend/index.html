@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Service CORBA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        header {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        header h1 { font-size: 24px; }
+        header span { font-size: 12px; color: #00d4ff; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 25px;
+            transition: transform 0.3s;
+        }
+        .card:hover { transform: translateY(-5px); }
+        .card h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px 15px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.5); }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover { opacity: 0.85; transform: scale(1.02); }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0,212,255,0.1);
+            border: 1px solid rgba(0,212,255,0.3);
+            border-radius: 8px;
+            font-size: 13px;
+            min-height: 40px;
+            word-break: break-all;
+        }
+        .result.error {
+            background: rgba(255,50,50,0.1);
+            border-color: rgba(255,50,50,0.3);
+        }
+        .result.success {
+            background: rgba(0,255,100,0.1);
+            border-color: rgba(0,255,100,0.3);
+        }
+        .statut {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 30px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            width: fit-content;
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.vert { background: #00ff88; animation: pulse 2s infinite; }
+        .dot.rouge { background: #ff4444; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div style="font-size:30px">📄</div>
+    <div>
+        <h1>PDF Service CORBA</h1>
+        <span>Système distribué avec CORBA + PDFBox + Docker</span>
+    </div>
+</header>
+
+<div class="container">
+    <div class="statut" id="statut">
+        <div class="dot rouge" id="dot"></div>
+        <span id="statutText">Vérification connexion...</span>
+    </div>
+
+    <div class="grid">
+
+        <!-- Fusion -->
+        <div class="card">
+            <h3>
+                <div class="icon" style="background:#e74c3c22">🔗</div>
+                Fusion de PDFs
+            </h3>
+            <input id="fusion1" placeholder="Fichier 1 (ex: doc1.pdf)">
+            <input id="fusion2" placeholder="Fichier 2 (ex: doc2.pdf)">
+            <button style="background:#e74c3c" onclick="fusion()">Fusionner</button>
+            <div class="result" id="fusionResult">—</div>
+        </div>
+
+        <!-- Découpage -->
+        <div class="card">
+            <h3>
+                <div class="icon" style="background:#e67e2222">✂️</div>
+                Découpage de PDF
+            </h3>
+            <input id="decFichier" placeholder="Fichier (ex: doc1.pdf)">
+            <input id="decDebut" placeholder="Page début" type="number">
+            <input id="decFin" placeholder="Page fin" type="number">
+            <button style="background:#e67e22" onclick="decoupage()">Découper</button>
+            <div class="result" id="decResult">—</div>
+        </div>
+
+        <!-- Extraction texte -->
+        <div class="card">
+            <h3>
+                <div class="icon" style="background:#3498db22">📝</div>
+                Extraction de Texte
+            </h3>
+            <input id="texteFichier" placeholder="Fichier (ex: doc1.pdf)">
+            <button style="background:#3498db" onclick="extraireTexte()">Extraire</button>
+            <div class="result" id="texteResult" style="max-height:100px;overflow:auto">—</div>
+        </div>
+
+        <!-- Création PDF -->
+        <div class="card">
+            <h3>
+                <div class="icon" style="background:#27ae6022">✨</div>
+                Création de PDF
+            </h3>
+            <textarea id="creerContenu" placeholder="Contenu du PDF..." rows="3"></textarea>
+            <button style="background:#27ae60" onclick="creerPdf()">Créer PDF</button>
+            <div class="result" id="creerResult">—</div>
+        </div>
+
+        <!-- Mot de passe -->
+        <div class="card">
+            <h3>
+                <div class="icon" style="background:#9b59b622">🔒</div>
+                Ajout Mot de Passe
+            </h3>
+            <input id="mdpFichier" placeholder="Fichier (ex: doc1.pdf)">
+            <input id="mdp" placeholder="Mot de passe" type="password">
+            <button style="background:#9b59b6" onclick="ajouterMotDePasse()">Protéger</button>
+            <div class="result" id="mdpResult">—</div>
+        </div>
+
+        <!-- Conversion Image -->
+        <div class="card">
+            <h3>
+                <div class="icon" style="background:#1abc9c22">🖼️</div>
+                Conversion PDF → Image
+            </h3>
+            <input id="imgFichier" placeholder="Fichier (ex: doc1.pdf)">
+            <button style="background:#1abc9c" onclick="convertirEnImage()">Convertir</button>
+            <div class="result" id="imgResult">—</div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const API = window.location.origin + '/api';
+
+    // Vérifier statut
+    async function checkStatut() {
+        try {
+            const r = await fetch(API + '/health');
+            const data = await r.json();
+            if (data.status === 'OK') {
+                document.getElementById('dot').className = 'dot vert';
+                document.getElementById('statutText').textContent = '● Connecté au serveur CORBA';
+            }
+        } catch(e) {
+            document.getElementById('statutText').textContent = '● Déconnecté';
+        }
+    }
+    checkStatut();
+    setInterval(checkStatut, 5000);
+
+    function afficher(id, texte, ok) {
+        const el = document.getElementById(id);
+        el.textContent = texte;
+        el.className = 'result ' + (ok ? 'success' : 'error');
+    }
+
+    async function fusion() {
+        const f1 = document.getElementById('fusion1').value;
+        const f2 = document.getElementById('fusion2').value;
+        try {
+            const r = await fetch(API + '/fusion', {
+                method: 'POST', body: f1 + '|' + f2
+            });
+            const d = await r.json();
+            afficher('fusionResult', d.resultat, d.resultat.startsWith('OK'));
+        } catch(e) { afficher('fusionResult', 'Erreur: ' + e.message, false); }
+    }
+
+    async function decoupage() {
+        const f = document.getElementById('decFichier').value;
+        const d = document.getElementById('decDebut').value;
+        const fin = document.getElementById('decFin').value;
+        try {
+            const r = await fetch(API + '/decoupage', {
+                method: 'POST', body: f + '|' + d + '|' + fin
+            });
+            const data = await r.json();
+            afficher('decResult', data.resultat, data.resultat.startsWith('OK'));
+        } catch(e) { afficher('decResult', 'Erreur: ' + e.message, false); }
+    }
+
+    async function extraireTexte() {
+        const f = document.getElementById('texteFichier').value;
+        try {
+            const r = await fetch(API + '/extraireTexte', {
+                method: 'POST', body: f
+            });
+            const d = await r.json();
+            afficher('texteResult', d.texte || d.resultat, true);
+        } catch(e) { afficher('texteResult', 'Erreur: ' + e.message, false); }
+    }
+
+    async function creerPdf() {
+        const c = document.getElementById('creerContenu').value;
+        try {
+            const r = await fetch(API + '/creerPdf', {
+                method: 'POST', body: c
+            });
+            const d = await r.json();
+            afficher('creerResult', d.resultat, d.resultat.startsWith('OK'));
+        } catch(e) { afficher('creerResult', 'Erreur: ' + e.message, false); }
+    }
+
+    async function ajouterMotDePasse() {
+        const f = document.getElementById('mdpFichier').value;
+        const m = document.getElementById('mdp').value;
+        try {
+            const r = await fetch(API + '/ajouterMotDePasse', {
+                method: 'POST', body: f + '|' + m
+            });
+            const d = await r.json();
+            afficher('mdpResult', d.resultat, d.resultat.startsWith('OK'));
+        } catch(e) { afficher('mdpResult', 'Erreur: ' + e.message, false); }
+    }
+
+    async function convertirEnImage() {
+        const f = document.getElementById('imgFichier').value;
+        try {
+            const r = await fetch(API + '/convertirEnImage', {
+                method: 'POST', body: f
+            });
+            const d = await r.json();
+            afficher('imgResult', d.resultat, d.resultat.startsWith('OK'));
+        } catch(e) { afficher('imgResult', 'Erreur: ' + e.message, false); }
+    }
+</script>
+</body>
+</html>
