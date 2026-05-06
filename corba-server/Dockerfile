@@ -11,7 +11,7 @@ RUN javac -cp .:pdfbox-1.8.16.jar:fontbox-1.8.16.jar:jempbox-1.8.16.jar:commons-
     StartServer.java
 
 EXPOSE 1050
-
+COPY index.html /app/index.html
 CMD bash -c "orbd -ORBInitialPort 1050 & sleep 3 && \
     java -cp .:pdfbox-1.8.16.jar:fontbox-1.8.16.jar:jempbox-1.8.16.jar:commons-logging.jar \
     StartServer -ORBInitialPort 1050 -ORBInitialHost localhost"

@@ -112,4 +112,18 @@ public class PdfController {
         service.convertirEnImage(fichier, r);
         repondre(e, 200, "{\"resultat\":\"" + r.value + "\"}");
     }
+
+// Servir le frontend
+server.createContext("/", e -> {
+    try {
+        java.nio.file.Path path = java.nio.file.Paths.get("/app/index.html");
+        byte[] bytes = java.nio.file.Files.readAllBytes(path);
+        e.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
+        e.sendResponseHeaders(200, bytes.length);
+        e.getResponseBody().write(bytes);
+        e.getResponseBody().close();
+    } catch(Exception ex) {
+        repondre(e, 500, "{\"error\":\"Frontend not found\"}");
+    }
+});
 }
