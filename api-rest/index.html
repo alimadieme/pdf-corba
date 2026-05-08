@@ -212,7 +212,7 @@
             const data = await r.json();
             if (data.status === 'OK') {
                 document.getElementById('dot').className = 'dot vert';
-                document.getElementById('statutText').textContent = '● Service opérationnel';
+                document.getElementById('statutText').textContent = '● Connecté';
             }
         } catch(e) {
             document.getElementById('statutText').textContent = '● Déconnecté';
