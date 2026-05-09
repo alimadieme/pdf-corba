@@ -57,8 +57,8 @@ public class PdfController {
     }
 
     // Parse multipart form data
-    static Map<String, Object> parseMultipart(HttpExchange e) throws IOException {
-        Map<String, Object> result = new HashMap<>();
+    static Map<String, java.lang.Object> parseMultipart(HttpExchange e) throws IOException {
+        Map<String, java.lang.Object> result = new HashMap<>();
         String contentType = e.getRequestHeaders().getFirst("Content-Type");
         if (contentType == null || !contentType.contains("multipart/form-data")) {
             return result;
@@ -166,7 +166,7 @@ public class PdfController {
     static void upload(HttpExchange e) throws IOException {
         if (e.getRequestMethod().equals("OPTIONS")) { repondre(e, 200, ""); return; }
         try {
-            Map<String, Object> data = parseMultipart(e);
+            Map<String, java.lang.Object> data = parseMultipart(e);
             String path = (String) data.get("file");
             String name = (String) data.get("file_name");
             if (path != null) {
