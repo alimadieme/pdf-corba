@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SenPDF — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --navy: #0D1B3E;
+  --navy2: #1A2E5A;
+  --blue: #1565C0;
+  --blue2: #1976D2;
+  --green: #2E7D32;
+  --bg: #F5F7FA;
+  --white: #FFFFFF;
+  --gray: #78909C;
+  --gray2: #ECEFF1;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:var(--bg); color:#1A237E; }
+
+nav {
+  background:var(--navy);
+  padding:0 40px; height:64px;
+  display:flex; align-items:center;
+  justify-content:space-between;
+  position:sticky; top:0; z-index:100;
+}
+.nav-logo { display:flex; align-items:center; gap:8px; text-decoration:none; }
+.nav-logo span:first-child { font-size:20px; font-weight:700; color:white; }
+.nav-logo span:last-child { font-size:20px; font-weight:700; color:#4FC3F7; }
+.nav-links { display:flex; gap:8px; }
+.nav-link {
+  padding:8px 16px; border-radius:8px;
+  color:#B0BEC5; font-size:13px;
+  text-decoration:none; transition:all 0.2s;
+}
+.nav-link:hover, .nav-link.active {
+  background:#1A3A5C; color:white;
+}
+.nav-right { display:flex; align-items:center; gap:12px; }
+.nav-user { font-size:13px; color:#B0BEC5; }
+.btn-logout {
+  padding:7px 16px; background:transparent;
+  border:1px solid #455A64; border-radius:6px;
+  color:#B0BEC5; font-size:13px; cursor:pointer;
+}
+.btn-logout:hover { background:#1A2E5A; color:white; }
+
+.container { max-width:1200px; margin:0 auto; padding:32px 24px; }
+
+.page-title { font-size:24px; font-weight:700; color:var(--blue); margin-bottom:8px; }
+.page-desc { font-size:13px; color:var(--gray); margin-bottom:32px; }
+
+/* STATS CARDS */
+.stats-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+  gap:16px; margin-bottom:32px;
+}
+.stat-card {
+  background:var(--white);
+  border:1px solid var(--gray2);
+  border-radius:12px; padding:20px 24px;
+  box-shadow:var(--shadow);
+  border-left:4px solid var(--blue);
+}
+.stat-card.green { border-left-color:var(--green); }
+.stat-card.orange { border-left-color:#E65100; }
+.stat-card.purple { border-left-color:#6A1B9A; }
+.stat-label { font-size:12px; font-weight:600; color:var(--gray); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+.stat-value { font-size:32px; font-weight:700; color:var(--blue); }
+.stat-card.green .stat-value { color:var(--green); }
+.stat-card.orange .stat-value { color:#E65100; }
+.stat-card.purple .stat-value { color:#6A1B9A; }
+.stat-sub { font-size:12px; color:var(--gray); margin-top:4px; }
+
+/* CHARTS */
+.charts-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px; margin-bottom:32px;
+}
+.chart-card {
+  background:var(--white);
+  border:1px solid var(--gray2);
+  border-radius:12px; padding:24px;
+  box-shadow:var(--shadow);
+}
+.chart-title {
+  font-size:15px; font-weight:600;
+  color:var(--blue); margin-bottom:16px;
+}
+
+/* HISTORIQUE */
+.hist-card {
+  background:var(--white);
+  border:1px solid var(--gray2);
+  border-radius:12px; padding:24px;
+  box-shadow:var(--shadow);
+}
+.hist-title {
+  font-size:15px; font-weight:600;
+  color:var(--blue); margin-bottom:16px;
+  display:flex; justify-content:space-between;
+  align-items:center;
+}
+.hist-table { width:100%; border-collapse:collapse; }
+.hist-table th {
+  text-align:left; font-size:11px;
+  font-weight:600; color:var(--gray);
+  text-transform:uppercase; letter-spacing:0.5px;
+  padding:8px 12px; border-bottom:2px solid var(--gray2);
+}
+.hist-table td {
+  padding:12px; font-size:13px;
+  border-bottom:1px solid var(--gray2);
+}
+.hist-table tr:last-child td { border-bottom:none; }
+.hist-table tr:hover td { background:#F8FAFC; }
+.badge {
+  display:inline-block; padding:3px 10px;
+  border-radius:20px; font-size:11px;
+  font-weight:600;
+}
+.badge-fusion { background:#E3F2FD; color:#1565C0; }
+.badge-texte { background:#E8F5E9; color:#2E7D32; }
+.badge-decoupage { background:#FFF3E0; color:#E65100; }
+.badge-image { background:#F3E5F5; color:#6A1B9A; }
+.badge-mdp { background:#FCE4EC; color:#C62828; }
+.badge-creer { background:#E0F7FA; color:#00695C; }
+.badge-default { background:#F5F5F5; color:#546E7A; }
+
+.ok { color:var(--green); font-weight:500; }
+.err { color:#C62828; font-weight:500; }
+
+footer {
+  background:var(--navy); text-align:center;
+  padding:12px; font-size:12px; color:#546E7A;
+  margin-top:40px;
+}
+
+.loading { text-align:center; color:var(--gray); padding:40px; font-size:14px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/"><span>Sen</span><span>PDF</span></a>
+  <div class="nav-links">
+    <a class="nav-link" href="/">Outils</a>
+    <a class="nav-link active" href="/dashboard">Dashboard</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user" id="navUser">👤</span>
+    <button class="btn-logout" onclick="logout()">Deconnexion</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-title">Tableau de bord</div>
+  <div class="page-desc">Vue d'ensemble de l'activite SenPDF</div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total operations</div>
+      <div class="stat-value" id="totalOps">--</div>
+      <div class="stat-sub">Depuis le debut</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Operation populaire</div>
+      <div class="stat-value" id="topOp" style="font-size:18px">--</div>
+      <div class="stat-sub">La plus utilisee</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-label">Succes</div>
+      <div class="stat-value" id="successRate">--</div>
+      <div class="stat-sub">Taux de reussite</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Derniere operation</div>
+      <div class="stat-value" id="lastOp" style="font-size:14px;margin-top:8px">--</div>
+      <div class="stat-sub">Operation recente</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Operations par type</div>
+      <canvas id="chartTypes" height="200"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Succes vs Erreurs</div>
+      <canvas id="chartStatus" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- HISTORIQUE -->
+  <div class="hist-card">
+    <div class="hist-title">
+      <span>Historique des operations</span>
+      <span style="font-size:12px;color:var(--gray)" id="histCount"></span>
+    </div>
+    <div id="histContent"><div class="loading">Chargement...</div></div>
+  </div>
+</div>
+
+<footer>SenPDF 2026</footer>
+
+<script>
+const API = window.location.origin + '/api';
+
+// Auth check
+const user = JSON.parse(localStorage.getItem('senpdf_session') || 'null');
+if (!user) { window.location.href = '/'; }
+else { document.getElementById('navUser').textContent = '👤 ' + user.name; }
+
+function logout() { localStorage.removeItem('senpdf_session'); window.location.href = '/'; }
+
+// Charger les données
+async function chargerDashboard() {
+  try {
+    const r = await fetch(API + '/historique');
+    const data = await r.json();
+
+    if (!data || data.length === 0) {
+      document.getElementById('totalOps').textContent = '0';
+      document.getElementById('histContent').innerHTML = '<div class="loading">Aucune operation effectuee</div>';
+      return;
+    }
+
+    // Stats
+    document.getElementById('totalOps').textContent = data.length;
+
+    // Compter par type
+    const counts = {};
+    let success = 0, errors = 0;
+    data.forEach(d => {
+      counts[d.operation] = (counts[d.operation] || 0) + 1;
+      if (d.resultat && d.resultat.startsWith('OK')) success++;
+      else errors++;
+    });
+
+    // Top operation
+    const topOp = Object.entries(counts).sort((a,b) => b[1]-a[1])[0];
+    document.getElementById('topOp').textContent = topOp ? topOp[0] : '--';
+
+    // Taux succès
+    const rate = Math.round((success / data.length) * 100);
+    document.getElementById('successRate').textContent = rate + '%';
+
+    // Dernière op
+    document.getElementById('lastOp').textContent = data[data.length-1]?.operation || '--';
+
+    // Chart types
+    const labels = Object.keys(counts);
+    const values = Object.values(counts);
+    const colors = ['#1565C0','#2E7D32','#E65100','#6A1B9A','#C62828','#00695C','#F57F17','#37474F'];
+
+    new Chart(document.getElementById('chartTypes'), {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{ data: values, backgroundColor: colors.slice(0, labels.length), borderWidth: 2 }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // Chart status
+    new Chart(document.getElementById('chartStatus'), {
+      type: 'bar',
+      data: {
+        labels: ['Succes', 'Erreurs'],
+        datasets: [{
+          data: [success, errors],
+          backgroundColor: ['#2E7D32', '#C62828'],
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+    });
+
+    // Tableau historique
+    document.getElementById('histCount').textContent = data.length + ' operations';
+    const reversed = [...data].reverse();
+    let html = '<table class="hist-table"><thead><tr><th>Operation</th><th>Fichier</th><th>Resultat</th><th>Date</th></tr></thead><tbody>';
+    reversed.forEach(d => {
+      const badge = getBadge(d.operation);
+      const ok = d.resultat && d.resultat.startsWith('OK');
+      html += '<tr>';
+      html += '<td><span class="badge ' + badge + '">' + d.operation + '</span></td>';
+      html += '<td>' + (d.fichier || '--') + '</td>';
+      html += '<td class="' + (ok ? 'ok' : 'err') + '">' + (ok ? 'Succes' : 'Erreur') + '</td>';
+      html += '<td>' + (d.date || '--') + '</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('histContent').innerHTML = html;
+
+  } catch(e) {
+    document.getElementById('histContent').innerHTML = '<div class="loading">Erreur chargement: ' + e.message + '</div>';
+  }
+}
+
+function getBadge(op) {
+  const map = {
+    'fusion': 'badge-fusion',
+    'extraireTexte': 'badge-texte',
+    'decoupage': 'badge-decoupage',
+    'convertirEnImage': 'badge-image',
+    'ajouterMotDePasse': 'badge-mdp',
+    'creerPdf': 'badge-creer'
+  };
+  return map[op] || 'badge-default';
+}
+
+chargerDashboard();
+</script>
+</body>
+</html>

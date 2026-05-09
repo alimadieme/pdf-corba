@@ -47,6 +47,21 @@ public class PdfController {
         return sb.toString().trim();
     }
 
+    
+    static void servirDashboard(HttpExchange e) throws IOException {
+        File f = new File("/app/dashboard.html");
+        FileInputStream fis = new FileInputStream(f);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[4096]; int n;
+        while ((n = fis.read(buf)) != -1) baos.write(buf, 0, n);
+        fis.close();
+        byte[] bytes = baos.toByteArray();
+        e.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
+        e.sendResponseHeaders(200, bytes.length);
+        e.getResponseBody().write(bytes);
+        e.getResponseBody().close();
+    }
+
     static void servirHTML(HttpExchange e) throws IOException {
         File f = new File("/app/index.html");
         FileInputStream fis = new FileInputStream(f);
@@ -153,6 +168,7 @@ public class PdfController {
         server.createContext("/api/supprimerPages", PdfController::supprimerPages);
         server.createContext("/api/extrairePages", PdfController::extrairePages);
         server.createContext("/api/historique", PdfController::historique);
+        server.createContext("/dashboard", e -> { try { servirDashboard(e); } catch(Exception ex) { ex.printStackTrace(); } });
         server.createContext("/api/download", PdfController::download);
         server.createContext("/api/health", e -> {
             try { repondre(e, 200, "{\"status\":\"OK\",\"mongodb\":\"" + (historiqueCollection != null ? "connected" : "disconnected") + "\"}"); }
