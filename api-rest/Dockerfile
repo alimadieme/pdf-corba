@@ -3,11 +3,7 @@ WORKDIR /app
 
 COPY . /app
 
-RUN echo "build-v6"
-
-RUN apt-get update && apt-get install -y curl && \
-    curl -L -o commons-logging.jar \
-    https://repo1.maven.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar
+RUN echo "build-v7"
 
 RUN idlj -fall PdfService.idl
 
