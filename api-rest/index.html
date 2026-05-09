@@ -422,14 +422,25 @@ function showTool(btn, op) {
   window._f1=null; window._f2=null;
 }
 
-function selectFile(num) {
+async function selectFile(num) {
   const input=document.createElement('input');
   input.type='file'; input.accept='.pdf';
-  input.onchange=e=>{
+  input.onchange=async e=>{
     const f=e.target.files[0];
     if(!f) return;
-    if(num===1){ window._f1=f; document.getElementById('fn1').textContent='✓ '+f.name; document.getElementById('fn1').className='file-name selected'; }
-    else { window._f2=f; document.getElementById('fn2').textContent='✓ '+f.name; document.getElementById('fn2').className='file-name selected'; }
+    // Upload le fichier sur le serveur
+    const formData = new FormData();
+    formData.append('file', f);
+    try {
+      const r = await fetch(API+'/upload', {method:'POST', body:formData});
+      const d = await r.json();
+      if(d.path) {
+        if(num===1){ window._f1path=d.path; window._f1name=f.name; document.getElementById('fn1').textContent='✓ '+f.name; document.getElementById('fn1').className='file-name selected'; }
+        else { window._f2path=d.path; window._f2name=f.name; document.getElementById('fn2').textContent='✓ '+f.name; document.getElementById('fn2').className='file-name selected'; }
+      }
+    } catch(err) {
+      console.error('Upload erreur:', err);
+    }
   };
   input.click();
 }
@@ -443,8 +454,8 @@ async function run(op) {
 
   try {
     let body='', endpoint='';
-    const f1name = window._f1 ? window._f1.name : 'doc1.pdf';
-    const f2name = window._f2 ? window._f2.name : 'doc2.pdf';
+    const f1name = window._f1path || 'doc1.pdf';
+    const f2name = window._f2path || 'doc2.pdf';
 
     switch(op) {
       case 'fusion': body=f1name+'|'+f2name; endpoint='fusion'; break;
