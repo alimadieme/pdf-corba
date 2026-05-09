@@ -280,6 +280,7 @@ footer {
   <div class="nav-right">
     <span class="nav-statut" id="navStatut">Connexion...</span>
     <span class="nav-user" id="navUser">👤</span>
+    <a id="dashLink" href="/dashboard" style="display:none;padding:7px 16px;background:#1565C0;border-radius:6px;color:white;font-size:13px;text-decoration:none;font-weight:500;">Dashboard</a>
     <button class="btn-logout" onclick="logout()">Deconnexion</button>
   </div>
 </nav>
@@ -340,7 +341,9 @@ function register() {
   if(pwd.length<6){showError('Mot de passe trop court');return;}
   const users=JSON.parse(localStorage.getItem('senpdf_users')||'[]');
   if(users.find(u=>u.email===email)){showError('Email deja utilise');return;}
-  const user={name,email,password:btoa(pwd)};
+  const users2=JSON.parse(localStorage.getItem('senpdf_users')||'[]');
+  const role = users2.length === 0 ? 'admin' : 'user';
+  const user={name,email,password:btoa(pwd),role};
   users.push(user);
   localStorage.setItem('senpdf_users',JSON.stringify(users));
   localStorage.setItem('senpdf_session',JSON.stringify(user));
@@ -349,6 +352,10 @@ function register() {
 function onLogin(user) {
   document.getElementById('authOverlay').style.display='none';
   document.getElementById('navUser').textContent='👤 '+user.name;
+  // Afficher Dashboard seulement si admin
+  if(user.role === 'admin' || user.email === 'admin@senpdf.com') {
+    document.getElementById('dashLink').style.display='inline-block';
+  }
 }
 function logout() { localStorage.removeItem('senpdf_session'); location.reload(); }
 window.addEventListener('load',()=>{

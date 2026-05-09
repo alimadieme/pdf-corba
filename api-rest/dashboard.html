@@ -215,9 +215,13 @@ footer {
 <script>
 const API = window.location.origin + '/api';
 
-// Auth check
+// Auth check - Admin seulement
 const user = JSON.parse(localStorage.getItem('senpdf_session') || 'null');
 if (!user) { window.location.href = '/'; }
+else if (user.role !== 'admin' && user.email !== 'admin@senpdf.com') {
+  alert('Acces refuse ! Cette page est reservee aux administrateurs.');
+  window.location.href = '/';
+}
 else { document.getElementById('navUser').textContent = '👤 ' + user.name; }
 
 function logout() { localStorage.removeItem('senpdf_session'); window.location.href = '/'; }
