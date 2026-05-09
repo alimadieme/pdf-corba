@@ -49,7 +49,12 @@ public class PdfController {
 
     static void servirHTML(HttpExchange e) throws IOException {
         File f = new File("/app/index.html");
-        byte[] bytes = Files.readAllBytes(f.toPath());
+        FileInputStream fis = new FileInputStream(f);
+        ByteArrayOutputStream baos2 = new ByteArrayOutputStream();
+        byte[] buf2 = new byte[4096]; int n2;
+        while ((n2 = fis.read(buf2)) != -1) baos2.write(buf2, 0, n2);
+        fis.close();
+        byte[] bytes = baos2.toByteArray();
         e.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
         e.sendResponseHeaders(200, bytes.length);
         e.getResponseBody().write(bytes);
