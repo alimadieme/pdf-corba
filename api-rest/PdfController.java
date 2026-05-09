@@ -153,6 +153,7 @@ public class PdfController {
         server.createContext("/api/supprimerPages", PdfController::supprimerPages);
         server.createContext("/api/extrairePages", PdfController::extrairePages);
         server.createContext("/api/historique", PdfController::historique);
+        server.createContext("/api/download", PdfController::download);
         server.createContext("/api/health", e -> {
             try { repondre(e, 200, "{\"status\":\"OK\",\"mongodb\":\"" + (historiqueCollection != null ? "connected" : "disconnected") + "\"}"); }
             catch(Exception ex) { ex.printStackTrace(); }
@@ -263,6 +264,29 @@ public class PdfController {
         service.supprimerPages(parts[0], pages, r);
         sauvegarderHistorique("supprimerPages", parts[0], r.value);
         repondre(e, 200, "{\"resultat\":\"" + r.value + "\"}");
+    }
+
+    
+    static void download(HttpExchange e) throws IOException {
+        String query = e.getRequestURI().getQuery();
+        String filename = query.replace("file=", "").trim();
+        filename = java.net.URLDecoder.decode(filename, "UTF-8");
+        File f = new File(filename);
+        if (!f.exists()) f = new File("/tmp/senpdf/" + filename);
+        if (!f.exists()) { repondre(e, 404, "{\"error\":\"Fichier non trouve\"}"); return; }
+        byte[] bytes;
+        FileInputStream fis = new FileInputStream(f);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[4096]; int n;
+        while ((n = fis.read(buf)) != -1) baos.write(buf, 0, n);
+        fis.close();
+        bytes = baos.toByteArray();
+        e.getResponseHeaders().add("Content-Type", "application/pdf");
+        e.getResponseHeaders().add("Content-Disposition", "attachment; filename=\"" + f.getName() + "\"");
+        e.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        e.sendResponseHeaders(200, bytes.length);
+        e.getResponseBody().write(bytes);
+        e.getResponseBody().close();
     }
 
     static void historique(HttpExchange e) throws IOException {

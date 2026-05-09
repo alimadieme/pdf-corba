@@ -473,6 +473,15 @@ async function run(op) {
     const val=d.resultat||d.texte||'OK';
     res.className='result-box '+(val.startsWith('OK')||d.texte?'success':'error');
     res.textContent=val;
+    // Ajouter bouton téléchargement si OK
+    if(val.startsWith('OK')) {
+      const filename = val.replace('OK: ', '').trim();
+      const dlBtn = document.createElement('a');
+      dlBtn.href = API + '/download?file=' + encodeURIComponent(filename);
+      dlBtn.textContent = '⬇️ Télécharger ' + filename;
+      dlBtn.style.cssText = 'display:block;margin-top:10px;padding:10px;background:#1565C0;color:white;border-radius:8px;text-decoration:none;text-align:center;font-weight:600;';
+      res.appendChild(dlBtn);
+    }
   } catch(e) {
     res.className='result-box error';
     res.textContent='Erreur: '+e.message;
