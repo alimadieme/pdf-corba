@@ -28,6 +28,17 @@ public class PdfController {
         e.getResponseBody().close();
     }
 
+    
+    static byte[] lireBodyBytes(InputStream is) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] chunk = new byte[4096];
+        int n;
+        while ((n = is.read(chunk)) != -1) {
+            buffer.write(chunk, 0, n);
+        }
+        return buffer.toByteArray();
+    }
+
     static String lireBody(InputStream is) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
@@ -53,7 +64,7 @@ public class PdfController {
             return result;
         }
         String boundary = "--" + contentType.split("boundary=")[1].trim();
-        byte[] bodyBytes = e.getRequestBody().readAllBytes();
+        byte[] bodyBytes = lireBodyBytes(e.getRequestBody());
         String body = new String(bodyBytes, "ISO-8859-1");
         String[] parts = body.split(boundary);
         for (String part : parts) {
