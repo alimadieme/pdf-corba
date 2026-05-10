@@ -158,6 +158,8 @@ public class PdfController {
 
         // Serveur HTTP
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+                server.createContext("/api/login", PdfController::login);
+        server.createContext("/api/register", PdfController::register);
         server.createContext("/api/upload", PdfController::upload);
         server.createContext("/api/fusion", PdfController::fusion);
         server.createContext("/api/extraireTexte", PdfController::extraireTexte);
@@ -183,6 +185,66 @@ public class PdfController {
         });
         server.start();
         System.out.println("[API] Serveur HTTP demarre sur port 8080 !");
+    }
+
+    
+    static void login(HttpExchange e) throws IOException {
+        if (e.getRequestMethod().equals("OPTIONS")) { repondre(e, 200, ""); return; }
+        try {
+            String body = lireBody(e.getRequestBody());
+            String[] parts = body.split("\\|");
+            String email = parts[0].trim();
+            String password = parts[1].trim();
+            
+            if (usersCollection != null) {
+                Document user = usersCollection.find(
+                    new Document("email", email).append("password", password)
+                ).first();
+                
+                if (user != null) {
+                    String role = user.getString("role") != null ? user.getString("role") : "user";
+                    String name = user.getString("name");
+                    repondre(e, 200, "{\"success\":true,\"name\":\"" + name + "\",\"email\":\"" + email + "\",\"role\":\"" + role + "\"}");
+                } else {
+                    repondre(e, 401, "{\"success\":false,\"message\":\"Email ou mot de passe incorrect\"}");
+                }
+            } else {
+                repondre(e, 500, "{\"success\":false,\"message\":\"Base de donnees non disponible\"}");
+            }
+        } catch (Exception ex) {
+            repondre(e, 500, "{\"success\":false,\"message\":\"" + ex.getMessage() + "\"}");
+        }
+    }
+
+    static void register(HttpExchange e) throws IOException {
+        if (e.getRequestMethod().equals("OPTIONS")) { repondre(e, 200, ""); return; }
+        try {
+            String body = lireBody(e.getRequestBody());
+            String[] parts = body.split("\\|");
+            String name = parts[0].trim();
+            String email = parts[1].trim();
+            String password = parts[2].trim();
+
+            if (usersCollection != null) {
+                Document existing = usersCollection.find(new Document("email", email)).first();
+                if (existing != null) {
+                    repondre(e, 400, "{\"success\":false,\"message\":\"Email deja utilise\"}");
+                    return;
+                }
+                long count = usersCollection.countDocuments();
+                String role = count == 0 ? "admin" : "user";
+                Document user = new Document("name", name)
+                    .append("email", email)
+                    .append("password", password)
+                    .append("role", role);
+                usersCollection.insertOne(user);
+                repondre(e, 200, "{\"success\":true,\"name\":\"" + name + "\",\"email\":\"" + email + "\",\"role\":\"" + role + "\"}");
+            } else {
+                repondre(e, 500, "{\"success\":false,\"message\":\"Base de donnees non disponible\"}");
+            }
+        } catch (Exception ex) {
+            repondre(e, 500, "{\"success\":false,\"message\":\"" + ex.getMessage() + "\"}");
+        }
     }
 
     static void upload(HttpExchange e) throws IOException {

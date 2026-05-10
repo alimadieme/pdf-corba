@@ -10,6 +10,7 @@ import javafx.animation.*;
 import javafx.util.Duration;
 import java.io.*;
 import java.net.*;
+import java.nio.file.*;
 
 public class SenPDF extends Application {
 
@@ -54,9 +55,7 @@ public class SenPDF extends Application {
         stage.setScene(scene);
         stage.show();
         FadeTransition ft = new FadeTransition(Duration.millis(600), root);
-        ft.setFromValue(0);
-        ft.setToValue(1);
-        ft.play();
+        ft.setFromValue(0); ft.setToValue(1); ft.play();
     }
 
     private HBox creerHeader() {
@@ -66,13 +65,11 @@ public class SenPDF extends Application {
         header.setPrefHeight(64);
         HBox logo = new HBox(6);
         logo.setAlignment(Pos.CENTER_LEFT);
-        Label icon = new Label("PDF");
-        icon.setStyle("-fx-font-size: 22px; -fx-text-fill: white;");
         Label t1 = new Label("Sen");
         t1.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: white;");
         Label t2 = new Label("PDF");
         t2.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #4FC3F7;");
-        logo.getChildren().addAll(icon, t1, t2);
+        logo.getChildren().addAll(t1, t2);
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         labelStatut = new Label("Connecte");
@@ -101,9 +98,7 @@ public class SenPDF extends Application {
             {"Extraire texte",  "extraireTexte"},
             {"Creer PDF",       "creerPdf"}
         };
-        for (String[] o : outils) {
-            sidebar.getChildren().add(creerBoutonSidebar(o[0], o[1]));
-        }
+        for (String[] o : outils) sidebar.getChildren().add(creerBoutonSidebar(o[0], o[1]));
         return sidebar;
     }
 
@@ -134,23 +129,27 @@ public class SenPDF extends Application {
         fichierSelectionne1 = null;
         fichierSelectionne2 = null;
         String[] info = getTitreOperation(op);
+
         VBox titreCard = new VBox(4);
         titreCard.setPadding(new Insets(20, 24, 20, 24));
-        titreCard.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12; -fx-border-color: " + GRAY2 + "; -fx-border-radius: 12;");
+        titreCard.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12; -fx-border-color: " + GRAY2 + "; -fx-border-radius: 12; -fx-border-width: 0 0 0 4; -fx-border-color: " + BLUE + ";");
         Label titre = new Label(info[0]);
         titre.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: " + BLUE + ";");
         Label desc = new Label(info[1]);
         desc.setStyle("-fx-font-size: 13px; -fx-text-fill: " + GRAY + ";");
         titreCard.getChildren().addAll(titre, desc);
+
         VBox card = new VBox(16);
         card.setPadding(new Insets(24));
         card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12; -fx-border-color: " + GRAY2 + "; -fx-border-radius: 12;");
+
         Label lblUpload1 = new Label("Fichier PDF");
         lblUpload1.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: " + DARK + ";");
         VBox uploadZone1 = creerZoneUpload(1);
         labelFichier1 = new Label("Aucun fichier selectionne");
         labelFichier1.setStyle("-fx-text-fill: " + GRAY + "; -fx-font-size: 12px;");
         card.getChildren().addAll(lblUpload1, uploadZone1, labelFichier1);
+
         switch (op) {
             case "fusion":
                 Label lbl2 = new Label("Deuxieme fichier PDF");
@@ -172,14 +171,20 @@ public class SenPDF extends Application {
                 card.getChildren().add(p);
                 break;
             case "motDePasse":
-                PasswordField m = new PasswordField(); m.setPromptText("Mot de passe"); m.setStyle(styleChamp()); m.setId("mdp");
+                PasswordField m = new PasswordField();
+                m.setPromptText("Mot de passe");
+                m.setStyle(styleChamp()); m.setId("mdp");
                 card.getChildren().add(m);
                 break;
             case "creerPdf":
-                TextArea ta = new TextArea(); ta.setPromptText("Contenu du PDF..."); ta.setPrefRowCount(5); ta.setStyle(styleChamp()); ta.setId("contenu");
+                TextArea ta = new TextArea();
+                ta.setPromptText("Contenu du PDF...");
+                ta.setPrefRowCount(5);
+                ta.setStyle(styleChamp()); ta.setId("contenu");
                 card.getChildren().add(ta);
                 break;
         }
+
         Button btnExec = new Button("Executer");
         btnExec.setMaxWidth(Double.MAX_VALUE);
         btnExec.setPrefHeight(44);
@@ -226,9 +231,10 @@ public class SenPDF extends Application {
         }
         labelResultat.setText("Traitement en cours...");
         labelResultat.setStyle("-fx-text-fill: " + BLUE2 + "; -fx-font-size: 13px;");
+
         new Thread(() -> {
             try {
-                String res = envoyer(construireCommande(op));
+                String res = envoyerFichier(op);
                 Platform.runLater(() -> {
                     if (res != null && res.startsWith("OK")) {
                         labelResultat.setText("Succes: " + res);
@@ -239,15 +245,29 @@ public class SenPDF extends Application {
                     }
                 });
             } catch (Exception ex) {
-                Platform.runLater(() -> { labelResultat.setText("Erreur connexion: " + ex.getMessage()); labelResultat.setStyle("-fx-text-fill: #C62828; -fx-font-size: 13px;"); });
+                Platform.runLater(() -> {
+                    labelResultat.setText("Erreur connexion: " + ex.getMessage());
+                    labelResultat.setStyle("-fx-text-fill: #C62828; -fx-font-size: 13px;");
+                });
             }
         }).start();
     }
 
+    private String envoyerFichier(String op) throws Exception {
+        try (Socket s = new Socket("localhost", 9998);
+             PrintWriter out = new PrintWriter(s.getOutputStream(), true);
+             BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()))) {
+            String commande = construireCommande(op);
+            out.println(commande);
+            return in.readLine();
+        }
+    }
+
     private String construireCommande(String op) {
         String f1 = fichierSelectionne1 != null ? fichierSelectionne1.getAbsolutePath() : "";
+        String f2 = fichierSelectionne2 != null ? fichierSelectionne2.getAbsolutePath() : "";
         switch (op) {
-            case "fusion": return "fusion|" + f1 + "|" + (fichierSelectionne2 != null ? fichierSelectionne2.getAbsolutePath() : "");
+            case "fusion": return "fusion|" + f1 + "|" + f2;
             case "decoupage": return "decoupage|" + f1 + "|" + getVal("pageDebut") + "|" + getVal("pageFin");
             case "extrairePages": return "extrairePages|" + f1 + "|" + getVal("pageDebut") + "|" + getVal("pageFin");
             case "supprimerPages": return "supprimerPages|" + f1 + "|" + getVal("pages");
@@ -255,7 +275,7 @@ public class SenPDF extends Application {
             case "convertirImage": return "convertirEnImage|" + f1;
             case "extraireTexte": return "extraireTexte|" + f1;
             case "creerPdf": return "creerPdf|" + getVal("contenu");
-            default: return "";
+            default: return op;
         }
     }
 
@@ -266,15 +286,6 @@ public class SenPDF extends Application {
             if (n instanceof PasswordField) return ((PasswordField) n).getText();
         }
         return "";
-    }
-
-    private String envoyer(String cmd) throws Exception {
-        try (Socket s = new Socket("localhost", 9998);
-             PrintWriter out = new PrintWriter(s.getOutputStream(), true);
-             BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()))) {
-            out.println(cmd);
-            return in.readLine();
-        }
     }
 
     private String[] getTitreOperation(String op) {

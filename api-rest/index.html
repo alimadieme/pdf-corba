@@ -323,31 +323,37 @@ function switchTab(tab) {
   document.getElementById('authError').style.display = 'none';
 }
 function showError(msg) { const e=document.getElementById('authError'); e.textContent=msg; e.style.display='block'; }
-function login() {
+async function login() {
   const email=document.getElementById('loginEmail').value.trim();
   const pwd=document.getElementById('loginPassword').value;
   if(!email||!pwd){showError('Remplissez tous les champs');return;}
-  const users=JSON.parse(localStorage.getItem('senpdf_users')||'[]');
-  const user=users.find(u=>u.email===email&&u.password===btoa(pwd));
-  if(!user){showError('Email ou mot de passe incorrect');return;}
-  localStorage.setItem('senpdf_session',JSON.stringify(user));
-  onLogin(user);
+  try {
+    const r = await fetch(API+'/login', {method:'POST', body: email+'|'+pwd});
+    const d = await r.json();
+    if(d.success) {
+      localStorage.setItem('senpdf_session', JSON.stringify(d));
+      onLogin(d);
+    } else {
+      showError(d.message || 'Erreur connexion');
+    }
+  } catch(e) { showError('Erreur serveur'); }
 }
-function register() {
+async function register() {
   const name=document.getElementById('regName').value.trim();
   const email=document.getElementById('regEmail').value.trim();
   const pwd=document.getElementById('regPassword').value;
   if(!name||!email||!pwd){showError('Remplissez tous les champs');return;}
   if(pwd.length<6){showError('Mot de passe trop court');return;}
-  const users=JSON.parse(localStorage.getItem('senpdf_users')||'[]');
-  if(users.find(u=>u.email===email)){showError('Email deja utilise');return;}
-  const users2=JSON.parse(localStorage.getItem('senpdf_users')||'[]');
-  const role = users2.length === 0 ? 'admin' : 'user';
-  const user={name,email,password:btoa(pwd),role};
-  users.push(user);
-  localStorage.setItem('senpdf_users',JSON.stringify(users));
-  localStorage.setItem('senpdf_session',JSON.stringify(user));
-  onLogin(user);
+  try {
+    const r = await fetch(API+'/register', {method:'POST', body: name+'|'+email+'|'+pwd});
+    const d = await r.json();
+    if(d.success) {
+      localStorage.setItem('senpdf_session', JSON.stringify(d));
+      onLogin(d);
+    } else {
+      showError(d.message || 'Erreur inscription');
+    }
+  } catch(e) { showError('Erreur serveur'); }
 }
 function onLogin(user) {
   document.getElementById('authOverlay').style.display='none';
